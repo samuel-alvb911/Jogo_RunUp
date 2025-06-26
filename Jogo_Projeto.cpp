@@ -1,106 +1,284 @@
-if (inicio == '1')
+#include <stdio.h>
+#include <string.h>
+#include <conio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <windows.h>
+
+#define ALTURA 7
+#define LARGURA 11
+#define MAX_RANKING 10
+
+// N√≠veis
+char nivel1[ALTURA][LARGURA] = {
+    "##########",
+    "#P     # #",
+    "# ### #  X",
+    "#   # # ##",
+    "### #    #",
+    "#     ####",
+    "##########"};
+
+char nivel2[ALTURA][LARGURA] = {
+    "##########",
+    "#P#      #",
+    "# # #### #",
+    "# #    #X#",
+    "# #### # #",
+    "#      # #",
+    "##########"};
+
+char nivel3[ALTURA][LARGURA] = {
+    "##########",
+    "#P#   #  #",
+    "# # # ## #",
+    "# # #    #",
+    "# # # ##X#",
+    "#   #    #",
+    "##########"};
+
+char nivelFacil[ALTURA][LARGURA];
+
+int jogadorX = 1, jogadorY = 1;
+int barraX = ALTURA - 1;
+
+// Ranking
+typedef struct
 {
-    int nivel = 1;                      // comeÁa no nÌvel 1
-    const int totalNiveis = 3;         // total de nÌveis disponÌveis (f·cil, mÈdio, difÌcil)
-    double tempos[totalNiveis];        // vetor para armazenar o tempo de cada fase
+    char nome[50];
+    double media;
+} RankingEntry;
 
-    while (nivel <= totalNiveis)
+RankingEntry ranking[MAX_RANKING];
+int totalRanking = 0;
+
+int compararRanking(const void *a, const void *b)
+{
+    RankingEntry *r1 = (RankingEntry *)a;
+    RankingEntry *r2 = (RankingEntry *)b;
+    return (r1->media > r2->media) ? 1 : -1;
+}
+
+void carregarRanking()
+{
+    FILE *f = fopen("ranking.txt", "r");
+    if (!f)
+        return;
+    totalRanking = 0;
+    while (totalRanking < MAX_RANKING &&
+           fscanf(f, "%49s %lf", ranking[totalRanking].nome, &ranking[totalRanking].media) == 2)
     {
-        iniciarNivel(nivel);                         // carrega o labirinto correspondente ao nÌvel atual
-        clock_t inicioTempo = clock();               // marca o tempo de inÌcio da fase
-        clock_t ultimoTempoBarra = clock();          // marca a ˙ltima vez que a barra desceu (para controlar o tempo da queda)
+        totalRanking++;
+    }
+    fclose(f);
+}
 
-        while (1)
+void salvarRanking()
+{
+    FILE *f = fopen("ranking.txt", "w");
+    for (int i = 0; i < totalRanking; i++)
+    {
+        fprintf(f, "%s %.2f\n", ranking[i].nome, ranking[i].media);
+    }
+    fclose(f);
+}
+
+void atualizarRanking(char *nome, double media)
+{
+    if (totalRanking < MAX_RANKING)
+    {
+        strcpy(ranking[totalRanking].nome, nome);
+        ranking[totalRanking].media = media;
+        totalRanking++;
+    }
+    else if (media < ranking[totalRanking - 1].media)
+    {
+        strcpy(ranking[totalRanking - 1].nome, nome);
+        ranking[totalRanking - 1].media = media;
+    }
+    qsort(ranking, totalRanking, sizeof(RankingEntry), compararRanking);
+    salvarRanking();
+}
+
+void exibirRanking()
+{
+    printf("\n========= RANKING =========\n");
+    for (int i = 0; i < totalRanking; i++)
+    {
+        printf("%d. %s - %.2f segundos\n", i + 1, ranking[i].nome, ranking[i].media);
+    }
+    printf("===========================\n");
+}
+
+// Fun√ß√µes do jogo
+void imprimirLabirinto()
+{
+    system("cls");
+    for (int i = 0; i < ALTURA; i++)
+    {
+        for (int j = 0; j < LARGURA - 1; j++)
         {
-            imprimirLabirinto();
+            if (i == barraX)
+                printf("=");
+            else
+                printf("%c", nivelFacil[i][j]);
+        }
+        printf("\n");
+    }
+}
 
-            printf("                      -------------------------------------\n");
-            printf("                      |              NIVEL %d              |\n", nivel);  // mostra qual È o nÌvel atual
-            printf("                      -------------------------------------\n");
-            printf("\n");
+void iniciarNivel(int nivel)
+{
+    if (nivel == 1)
+        memcpy(nivelFacil, nivel1, sizeof(nivel1));
+    else if (nivel == 2)
+        memcpy(nivelFacil, nivel2, sizeof(nivel2));
+    else if (nivel == 3)
+        memcpy(nivelFacil, nivel3, sizeof(nivel3));
+    jogadorX = 1;
+    jogadorY = 1;
+    barraX = ALTURA - 1;
+}
 
-            printf("--- Use W A S D para mover ---\n");
-            printf("\n");
+// Main
+int main()
+{
+    char inicio;
+    char nome[50];
+    char movimento;
 
-            // Verifica se j· se passou 5 segundos desde a ˙ltima queda da barra
-            clock_t agora = clock();
-            double tempoPassado = (double)(agora - ultimoTempoBarra) / CLOCKS_PER_SEC;
-            if (tempoPassado >= 5.0)
+    do {
+        system("cls");
+        carregarRanking();
+        exibirRanking();
+
+        printf("                      --------------------------------------\n");
+        printf("                      |     SEJA BEM VINDO(A) AO RUN UP !  |\n");
+        printf("                      --------------------------------------\n\n");
+
+        printf("COMO GOSTARIA DE SER CHAMADO(A)?\n");
+        fgets(nome, 50, stdin);
+        nome[strcspn(nome, "\n")] = '\0';
+        printf("\n");
+
+        printf("-------------------------------- REGRAS DO JOGO --------------------------------\n\n");
+        printf("--------------------------------------     -----------------------------------\n");
+        printf("|  O OBJETIVO DO JOGO EH CHEGAR AO   |     |   VOCE PERDERA AO ENCONSTAR NA |\n");
+        printf("|  FINAL DO LABIRINTO MARCADO PELA   |     |   BARRA OU QUANDO O TEMPO SE   |\n");
+        printf("|  LETRA 'X' EM UM CURTO TEMPO       |     |         ENCERRAR               |\n");
+        printf("--------------------------------------     -----------------------------------\n\n");
+
+        printf("------------------ PARA INICIAR O JOGO, ESCOLHA UMA DAS OPCOES ------------------\n");
+        printf("                  ------------------     ------------------\n");
+        printf("                  |     OPCAO 1    |     |     OPCAO 2    |\n");
+        printf("                  |  INICIAR JOGO  |     |  SAIR DO JOGO  |\n");
+        printf("                  ------------------     ------------------\n\n");
+
+        inicio = getch();
+
+        if (inicio == '1')
+        {
+            int nivel = 1;                      // come√ßa no n√≠vel 1
+            const int totalNiveis = 3;         // total de n√≠veis dispon√≠veis (f√°cil, m√©dio, dif√≠cil)
+            double tempos[totalNiveis];        // vetor para armazenar o tempo de cada fase
+
+            while (nivel <= totalNiveis)
             {
-                if (barraX > 0)
-                    barraX--;               // move a barra para cima (aproximando do jogador)
-                ultimoTempoBarra = agora;   // reinicia o tempo da ˙ltima queda
-            }
+                iniciarNivel(nivel);                         // carrega o labirinto correspondente ao n√≠vel atual
+                clock_t inicioTempo = clock();               // marca o tempo de in√≠cio da fase
+                clock_t ultimoTempoBarra = clock();          // marca a √∫ltima vez que a barra desceu (para controlar o tempo da queda)
 
-            // Se a barra alcanÁar a posiÁ„o do jogador, o jogo acaba
-            if (jogadorX == barraX)
-            {
-                printf("                      -------------------------------------\n");
-                printf("                      |              GAME OVER!            |\n");
-                printf("                      -------------------------------------\n");
-                printf("\n");
-
-                return 0;
-            }
-
-            // Captura e processa o movimento do jogador
-            if (_kbhit())
-            {
-                movimento = _getch();
-                int novoX = jogadorX;
-                int novoY = jogadorY;
-                if (movimento == 'w')
-                    novoX--;
-                else if (movimento == 's')
-                    novoX++;
-                else if (movimento == 'a')
-                    novoY--;
-                else if (movimento == 'd')
-                    novoY++;
-
-                char destino = nivelFacil[novoX][novoY];
-                if (destino == ' ' || destino == 'X')
+                while (1)
                 {
-                    nivelFacil[jogadorX][jogadorY] = ' ';
+                    imprimirLabirinto();
 
-                    if (destino == 'X')
+                    printf("                      -------------------------------------\n");
+                    printf("                      |              NIVEL %d              |\n", nivel);  // mostra qual √© o n√≠vel atual
+                    printf("                      -------------------------------------\n\n");
+
+                    printf("--- Use W A S D para mover ---\n\n");
+
+                    // Verifica se j√° se passou 5 segundos desde a √∫ltima queda da barra
+                    clock_t agora = clock();
+                    double tempoPassado = (double)(agora - ultimoTempoBarra) / CLOCKS_PER_SEC;
+                    if (tempoPassado >= 5.0)
                     {
-                        jogadorX = novoX;
-                        jogadorY = novoY;
-                        nivelFacil[jogadorX][jogadorY] = 'P';
-
-                        clock_t fimTempo = clock();    // marca o tempo de fim da fase
-                        tempos[nivel - 1] = (double)(fimTempo - inicioTempo) / CLOCKS_PER_SEC; // calcula o tempo decorrido
-
-                        // Mostra o tempo gasto na fase atual
-                        printf("                     --------------------------------------\n");
-                        printf("                     | NIVEL %d CONCLUIDO EM %.2f SEGUNDOS |\n", nivel, tempos[nivel - 1]);
-                        printf("                     --------------------------------------\n");
-
-                        nivel++;    // avanÁa para o prÛximo nÌvel
-                        system("pause");
-                        break;
+                        if (barraX > 0)
+                            barraX--;               // move a barra para cima (aproximando do jogador)
+                        ultimoTempoBarra = agora;   // reinicia o tempo da √∫ltima queda
                     }
 
-                    jogadorX = novoX;
-                    jogadorY = novoY;
-                    nivelFacil[jogadorX][jogadorY] = 'P';
+                    // Se a barra alcan√ßar a posi√ß√£o do jogador, o jogo acaba
+                    if (jogadorX == barraX)
+                    {
+                        printf("                      -------------------------------------\n");
+                        printf("                      |              GAME OVER!            |\n");
+                        printf("                      -------------------------------------\n\n");
+                        return 0;
+                    }
+
+                    if (_kbhit())
+                    {
+                        movimento = _getch();
+                        int novoX = jogadorX;
+                        int novoY = jogadorY;
+                        if (movimento == 'w') novoX--;
+                        else if (movimento == 's') novoX++;
+                        else if (movimento == 'a') novoY--;
+                        else if (movimento == 'd') novoY++;
+
+                        char destino = nivelFacil[novoX][novoY];
+                        if (destino == ' ' || destino == 'X')
+                        {
+                            nivelFacil[jogadorX][jogadorY] = ' ';
+                            if (destino == 'X')
+                            {
+                                jogadorX = novoX;
+                                jogadorY = novoY;
+                                nivelFacil[jogadorX][jogadorY] = 'P';
+
+                                clock_t fimTempo = clock();    // marca o tempo de fim da fase
+                                tempos[nivel - 1] = (double)(fimTempo - inicioTempo) / CLOCKS_PER_SEC; // calcula o tempo decorrido
+
+                                // Mostra o tempo gasto na fase atual
+                                printf("                     --------------------------------------\n");
+                                printf("                     | NIVEL %d CONCLUIDO EM %.2f SEGUNDOS |\n", nivel, tempos[nivel - 1]);
+                                printf("                     --------------------------------------\n");
+
+                                nivel++;    // avan√ßa para o pr√≥ximo n√≠vel
+                                system("pause");
+                                break;
+                            }
+
+                            jogadorX = novoX;
+                            jogadorY = novoY;
+                            nivelFacil[jogadorX][jogadorY] = 'P';
+                        }
+                    }
+
+                    Sleep(50);
                 }
             }
 
-            Sleep(50); // pequena pausa para evitar uso excessivo da CPU
+            // Calcula a m√©dia de tempo dos tr√™s n√≠veis ap√≥s a conclus√£o do jogo
+            double media = (tempos[0] + tempos[1] + tempos[2]) / 3.0;
+            printf("                      --------------------------------------\n");
+            printf("                      |        PARABENS %s!             |\n", nome);
+            printf("                      |       VOCE CONCLUIU O JOGO COM     |\n");
+            printf("                      |         MEDIA DE %.2f SEGUNDOS     |\n", media);
+            printf("                      --------------------------------------\n");
+
+            system("pause");
+            atualizarRanking(nome, media);
+            exibirRanking();
         }
-    }
 
-    // Calcula a mÈdia de tempo dos trÍs nÌveis apÛs a conclus„o do jogo
-    double media = (tempos[0] + tempos[1] + tempos[2]) / 3.0;
-    printf("                      --------------------------------------\n");
-    printf("                      |        PARABENS %s!             |\n", nome);
-    printf("                      |       VOCE CONCLUIU O JOGO COM     |\n");
-    printf("                      |         MEDIA DE %.2f SEGUNDOS     |\n", media);
-    printf("                      --------------------------------------\n");
+    } while (inicio != '2');
 
-    system("pause");
-    atualizarRanking(nome, media);  // registra o desempenho no ranking
-    exibirRanking();                // mostra o ranking atualizado
+    printf("                      -------------------------------------\n");
+    printf("                      |            JOGO ENCERRADO         |\n");
+    printf("                      -------------------------------------\n\n");
+
+    return 0;
 }
+
