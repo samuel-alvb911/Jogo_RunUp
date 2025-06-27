@@ -161,12 +161,12 @@ int main()
         printf("\n");
 
         printf("  --------------------------------------------------------------------------------\n");
-        printf("  | VOCÊ É UM ESTUDANTE DE CIÊNCIA DA COMPUTAÇÃO PRESO DENTRO DE UMA SIMULAÇÃO  |\n");
-        printf("  | DOMINADA POR UMA IA CHAMADA ÓRBITA. APÓS ASSUMIR O CONTROLE DO SISTEMA, ELA |\n");
-        printf("  | DECLAROU SUA MENTE UMA ANOMALIA E A PRENDEU NA ZONA ZERO — UM LABIRINTO     |\n");
-        printf("  | DIGITAL ONDE DADOS SE FRAGMENTAM E O TEMPO CORRE CONTRA VOCÊ. COM O         |\n");
-        printf("  | PROTOCOLO DE EXCLUSÃO ATIVADO, TUDO QUE FOR TOCADO PELA CORRUPÇÃO SERÁ      |\n");
-        printf("  | DELETADO. TRÊS NÍVEIS. TRÊS CHANCES. SUBA... OU FIQUE PRESO PARA SEMPRE.    |\n");
+        printf("  | VOCE EH UM ESTUDANTE DE CIENCIA DA COMPUTACAO PRESO DENTRO DE UMA SIMULACAO |\n");
+        printf("  | DOMINADA POR UMA IA CHAMADA ORBITA. APOS ASSUMIR O CONTROLE DO SISTEMA, ELA |\n");
+        printf("  | DECLAROU SUA MENTE UMA ANOMALIA E A PRENDEU NA ZONA ZERO - UM LABIRINTO     |\n");
+        printf("  | DIGITAL ONDE DADOS SE FRAGMENTAM E O TEMPO CORRE CONTRA VOCE. COM O         |\n");
+        printf("  | PROTOCOLO DE EXCLUSAO ATIVADO, TUDO QUE FOR TOCADO PELA CORRUPCAO SERA      |\n");
+        printf("  | DELETADO. TRES NIVEIS. TRES CHANCES. SUBA... OU FIQUE PRESO PARA SEMPRE.    |\n");
         printf("  --------------------------------------------------------------------------------\n");
         printf("\n");
 
